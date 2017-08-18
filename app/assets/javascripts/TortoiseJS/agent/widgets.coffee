@@ -177,12 +177,39 @@ window.bindWidgets = (container, widgets, code, info, readOnly, filename) ->
       exportBlob = new Blob([exportText], {type: "text/plain:charset=utf-8"})
       saveAs(exportBlob, filename)
       return
+    
     exportView: (filename) ->
       anchor = document.createElement("a")
       anchor.setAttribute("href", viewController.view.visibleCanvas.toDataURL("img/png"))
       anchor.setAttribute("download", filename)
       anchor.click()
       return
+
+    #String -> String -> Unit
+    exportCSV: (cb) -> (filename) ->
+      exportBlob = new Blob([cb], {type: "text/csv:charset=utf-8"})
+      saveAs(exportBlob, filename)
+      return
+  }
+
+  fileReader = {
+    read: (file) ->
+      tmpReader = new FileReader()
+      tmpReader.onload = ((f) -> (e) ->
+        contents = e.target.result)(file)
+      tmpReader
+  }
+
+  importing = {
+    importWorld: (filename) ->
+      input = document.getElementById('import-world-input')
+      console.log("We got here!")
+      console.log(input)
+      if input.files?
+        console.log(input.files[0])
+        input.files[0]
+      else
+        console.log("Error!")
   }
 
   ractive.observe('widgetObj.*.currentValue', (newVal, oldVal, keyPath, widgetNum) ->
@@ -238,7 +265,8 @@ window.bindWidgets = (container, widgets, code, info, readOnly, filename) ->
   )
 
   controller = new WidgetController(ractive, model, widgetObj, viewController
-                                  , plotOps, mouse, write, output, dialog, worldConfig, exporting)
+                                  , plotOps, mouse, write, output, dialog, worldConfig
+                                  , exporting, importing, fileReader)
   setupInterfaceEditor(ractive, controller.removeWidgetById.bind(controller))
   controller
 
@@ -271,7 +299,7 @@ window.handlingErrors = (f) -> ->
 
 class window.WidgetController
   constructor: (@ractive, @model, @widgetObj, @viewController, @plotOps
-              , @mouse, @write, @output, @dialog, @worldConfig, @exporting) ->
+              , @mouse, @write, @output, @dialog, @worldConfig, @exporting, @importing, @fileReader) ->
 
   # () -> Unit
   runForevers: ->
@@ -523,6 +551,10 @@ template =
             <span style="margin-right: 4px;">Export:</span>
             <button class="netlogo-ugly-button" on-click="exportnlogo">NetLogo</button>
             <button class="netlogo-ugly-button" on-click="exportHtml">HTML</button>
+          </div>
+          <div class="netlogo-export-wrapper">
+            <span style="margin-right: 4px;">Import World:</span>
+            <input id="import-world-input" type="file" name="Import World" />
           </div>
         </div>
       {{/}}
