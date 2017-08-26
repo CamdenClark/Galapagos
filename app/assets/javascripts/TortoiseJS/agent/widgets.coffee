@@ -177,13 +177,6 @@ window.bindWidgets = (container, widgets, code, info, readOnly, filename) ->
       exportBlob = new Blob([exportText], {type: "text/plain:charset=utf-8"})
       saveAs(exportBlob, filename)
       return
-    
-    exportView: (filename) ->
-      anchor = document.createElement("a")
-      anchor.setAttribute("href", viewController.view.visibleCanvas.toDataURL("img/png"))
-      anchor.setAttribute("download", filename)
-      anchor.click()
-      return
 
     #String -> String -> Unit
     exportCSV: (cb) -> (filename) ->
@@ -193,11 +186,12 @@ window.bindWidgets = (container, widgets, code, info, readOnly, filename) ->
   }
 
   fileReader = {
-    read: (file) ->
+    read: (file, cb) ->
       tmpReader = new FileReader()
-      tmpReader.onload = ((f) -> (e) ->
-        contents = e.target.result)(file)
-      tmpReader
+      tmpReader.onload = (e) ->
+        console.log(e)
+        cb(e.target.result)
+      tmpReader.readAsText(file)
   }
 
   importing = {
@@ -205,11 +199,11 @@ window.bindWidgets = (container, widgets, code, info, readOnly, filename) ->
       input = document.getElementById('import-world-input')
       console.log("We got here!")
       console.log(input)
-      if input.files?
+      if input.files.length == 0
+        console.log("Error!")
+      else
         console.log(input.files[0])
         input.files[0]
-      else
-        console.log("Error!")
   }
 
   ractive.observe('widgetObj.*.currentValue', (newVal, oldVal, keyPath, widgetNum) ->
